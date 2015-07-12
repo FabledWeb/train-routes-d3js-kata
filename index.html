@@ -6,22 +6,22 @@
     .node {
       stroke: #ddd;
       stroke-width: 1.5px;
-      fill-opacity: 0.8;
     }
-    .node.selcted, .node.start, .node.end {
+    .node, .text, .link {
+      -webkit-transition: all 0.3s; /* Safari */
+      transition: all 0.3s;
+    }
+    .init {
+      fill-opacity: 0.7;
+      stroke-opacity: 0.7;
+    }
+    .selected, .start, .end {
       fill-opacity: 1;
+      stroke-opacity: 1;
     }
-    .node.not-selected {
+    .not-selected {
       fill-opacity: 0.3;
-    }
-    .text {
-      fill-opacity: 0.8;
-    }
-    .text.selected {
-      fill-opacity: 1;
-    }
-    .text.not-selected {
-      fill-opacity: 0.3;
+      stroke-opacity: 0.3;
     }
     .node.start {
       stroke: rgba(25, 250, 100, 0.75);
@@ -32,15 +32,13 @@
       stroke-width: 5px;
     }
     .link {
-      stroke-opacity: .5;
       stroke-width: 5px;
     }
     .link.selected {
-      stroke-opacity: 1;
+      stroke-width: 7px;
     }
     .link.not-selected {
       stroke-width: 3px;
-      stroke-opacity: 0.1;
     }
     #canvas {
       height: 100%;
@@ -166,10 +164,8 @@ function Graph(){
             destinations: locations[source].destinations
           };
         });
-        console.log('locations',locations);
         var edges = [];
         _.forEach(nodes, function(source,index) {
-            console.log('source',source);
             dijkstrasGraph.addVertex(source.name, source.destinations);
           _.forIn(source.destinations, function(distance,destName) {
             edges.push({
@@ -179,10 +175,6 @@ function Graph(){
           });
         });
         
-        console.log('data',data);
-        console.log('nodes',nodes);
-        console.log('edges',edges);
-
         return {
           edges: edges,
           nodes: nodes
@@ -195,8 +187,8 @@ function Graph(){
           .data(graph.edges)
           .enter().append('marker')
             .attr('id', function(d,i){ return 'marker_'+label + i})
-            .attr('markerHeight', 3)
-            .attr('markerWidth', 4)
+            .attr('markerHeight', 5)
+            .attr('markerWidth', 6)
             .attr('markerUnits', 'strokeWidth')
             .attr('orient', 'auto')
             .attr('refX', x)
@@ -244,17 +236,16 @@ function Graph(){
         .start();
       
       //add arrows to the start and end of a line
-      addArrows(-30,'start',svg);
-      addArrows(30,'end',svg);
+      addArrows(-22,'start',svg);
+      addArrows(20,'end',svg);
 
       var link = svg.selectAll(".link")
         .data(graph.edges)
         .enter().append("line")
-        .attr("class", "link")
+        .attr("class", "link init")
         .attr('marker-start', function(d,i) { return 'url(#marker_start' + i + ')' })
         .attr('marker-end', function(d,i) { return 'url(#marker_end' + i + ')' })
         .attr("stroke", function(d,i) { return color(i); });
-
 
       var selected = {
         start: { elem: null, data: null },
@@ -268,7 +259,6 @@ function Graph(){
           routeMap[route[i]] = route[i+1];
         }
         node.attr("class", function(d,i) {
-          console.log(this);
           var className = this.getAttribute('class');
           if(d.name === selected.start.data.name) {
             className = 'node start';
@@ -282,7 +272,6 @@ function Graph(){
           return className;
         });
         text.attr("class", function(d,i) {
-          console.log(this);
           var className = this.getAttribute('class');
           if(d.name === selected.start.data.name) {
             className = 'text start';
@@ -298,7 +287,6 @@ function Graph(){
         link.attr("class", function(d,i) {
           return routeMap[d.source.name] === d.target.name ? 'link selected' : 'link not-selected';
         });
-        console.log('routeMap',routeMap);
       };
 
       var nodeClick = function(d,i) {
@@ -327,16 +315,14 @@ function Graph(){
         d3.select(selected.end.elem).classed("end", true);
 
         if(selected.end.elem) {
-          console.log('node click:', d, selected.start);
           var route = dijkstrasGraph.shortestPath(selected.start.data.name, selected.end.data.name).concat([selected.start.data.name]).reverse();
-          console.log(route);
           highlightRoute(route);
         }
       };
       var node = svg.selectAll(".node")
         .data(graph.nodes)
         .enter().append("circle")
-        .attr("class", "node")
+        .attr("class", "node init")
         .attr("r", 10)
         .on("click", nodeClick);
 
@@ -345,11 +331,9 @@ function Graph(){
         .enter().append("text")
         .attr('x',function(d) { return d.x; })
         .attr('y',function(d) { return d.y; })
-        .attr('class', 'text')
+        .attr('class', 'text init')
         .text(function(d) { return d.name; });
 
-      node.append("title")
-        .text(function(d) { return d.name; });
       link.append("title")
         .text(function(d) { return d.source.destinations[d.target.name] + 'km to '+d.target.name; });
 
@@ -358,12 +342,6 @@ function Graph(){
             .attr("y1", function(d) { return d.source.y; })
             .attr("x2", function(d) { return d.target.x; })
             .attr("y2", function(d) { return d.target.y; });
-            //.attr("class", function(d) {
-            //  if(selected.end.elem) {
-            //    console.log('routeMap[d.source.name',routeMap[d.source.name]);
-            //  }
-            //  return routeMap[d.source.name] === d.target.name ? 'link selected' : 'link';
-            //});
 
         node.attr("cx", function(d) { return d.x; })
             .attr("cy", function(d) { return d.y; });
