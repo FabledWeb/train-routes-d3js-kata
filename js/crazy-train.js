@@ -20,6 +20,16 @@
       }
       return className;
     });
+
+    var distance = 0;
+    link.attr("class", function(d,i) {
+      var selected = routeMap[d.source.name] === d.target.name;
+      if(selected) {
+        distance+= d.source.destinations[d.target.name];
+      }
+      return selected ? 'link selected' : 'link not-selected';
+    });
+
     text.attr("class", function(d) {
       var className = this.getAttribute('class');
       if(d.name === selected.start.data.name) {
@@ -32,10 +42,20 @@
         className = routeMap[d.name] ? 'text selected' : 'text not-selected';
       }
       return className;
+    }).text(function(d) {
+      var label = d.name;
+      //if this is the destination and start!=end, then show the route distance
+      if(selected.end.data && selected.end.data.name === d.name && selected.start.data.name !== selected.end.data.name) {
+        if(distance > 0) {
+          label+= ' (' + distance + ' km)';
+        }
+        else {
+          label+= ' (no route)';
+        }
+      }
+      return label;
     });
-    link.attr("class", function(d,i) {
-      return routeMap[d.source.name] === d.target.name ? 'link selected' : 'link not-selected';
-    });
+;
   };
 
   var nodeClick = function(d,i) {
@@ -58,12 +78,17 @@
 
     //update the map with the new route
     if(selected.end.elem) {
-      highlightRoute(dijkstrasGraph.shortestPath(selected.start.data.name, selected.end.data.name).concat([selected.start.data.name]).reverse());
+      highlightRoute(
+        dijkstrasGraph.shortestPath(selected.start.data.name, selected.end.data.name)
+          .concat([selected.start.data.name])
+          .reverse()
+      );
     }
     else {
       highlightRoute([]);
     }
   };
+
 
   /** and here we go... **/
 
@@ -153,8 +178,8 @@
   var text = svg.selectAll(".text")
     .data(graph.nodes)
     .enter().append("text")
-      .attr('x',function(d) { return d.x; })
-      .attr('y',function(d) { return d.y; })
+      .attr('x', function(d) { return d.x; })
+      .attr('y', function(d) { return d.y; })
       .attr('class', 'text init')
       .text(function(d) { return d.name; });
 

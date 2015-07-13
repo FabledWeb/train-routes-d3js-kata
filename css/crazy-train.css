@@ -27,6 +27,12 @@ body {
 .text.start, .text.end {
   font-size: 1.3em;
 }
+.text.start {
+  fill: rgb(25, 250, 100);
+}
+.text.end{
+  fill: rgb(250, 25, 100);
+}
 
 /* node/city styles */
 .node {
